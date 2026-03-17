@@ -1,0 +1,85 @@
+# ─────────────────────────────────────────────────────────────────
+# .gitignore — Industrial Anomaly Detection
+# Author: Fatahillah
+# ─────────────────────────────────────────────────────────────────
+
+# ── Dataset (too large, stored on Google Drive) ──────────────────
+data/
+datasets/
+*.tar.xz
+*.tar.gz
+*.zip
+
+# ── Model weights & memory banks (stored on Google Drive) ────────
+models/
+*.pt
+*.pth
+*.npy
+*.onnx
+
+# ── Result arrays & logs (stored on Google Drive) ────────────────
+results/patchcore_*/
+results/ae_*/
+results/experiment_log.csv
+results/summary_results.json
+results/per_defect_results.json
+results/final_analysis.json
+results/ae_metadata.json
+results/ae_loss_curve_*.png
+
+# ── Analysis error figures (stored on Google Drive) ──────────────
+# NOTE: heatmaps/ dan false_positives/ di-INCLUDE ke repo (~37MB, aman)
+results/figures/analysis/fp_*
+results/figures/analysis/fn_*
+results/figures/analysis/hard_cases_*
+results/figures/analysis/score_behavior.png
+results/figures/analysis/method_comparison_4d.png
+
+# ── Config with local paths (regenerated via Notebook 00) ────────
+configs/
+
+# ── Python cache ─────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.whl
+
+# ── Jupyter checkpoints ──────────────────────────────────────────
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# ── Virtual environment ──────────────────────────────────────────
+venv/
+env/
+.env
+.venv/
+ENV/
+
+# ── OS files ─────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── IDE ──────────────────────────────────────────────────────────
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+
+# ── Temp & local workspace ───────────────────────────────────────
+*.log
+*.tmp
+temp/
+logs/
+project_workspace/

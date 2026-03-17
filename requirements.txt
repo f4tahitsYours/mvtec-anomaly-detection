@@ -1,0 +1,36 @@
+# ─────────────────────────────────────────────────────────────────
+# requirements.txt — Industrial Anomaly Detection
+# Author : Fatahillah
+# Platform: Google Colab Free Tier (T4 GPU)
+#
+# IMPORTANT:
+#   Do NOT run `pip install -r requirements.txt` directly in Colab.
+#   Colab ships with CUDA-matched PyTorch builds that conflict with
+#   PyPI versions. Each notebook installs missing packages safely.
+#
+# For local development (non-Colab), install everything:
+#   pip install -r requirements.txt
+# ─────────────────────────────────────────────────────────────────
+
+# ── Must install in Colab (missing from default environment) ─────
+faiss-cpu>=1.7.4
+pytorch-msssim>=1.0.0
+psutil>=5.9.0
+
+# ── Core ML (pre-installed in Colab, required for local dev) ─────
+torch>=2.0.0
+torchvision>=0.15.0
+
+# ── Data & Evaluation ────────────────────────────────────────────
+numpy>=1.24.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+Pillow>=9.5.0
+opencv-python>=4.8.0
+
+# ── Visualization ────────────────────────────────────────────────
+matplotlib>=3.7.0
+seaborn>=0.13.0
+
+# ── Utilities ────────────────────────────────────────────────────
+tqdm>=4.65.0
