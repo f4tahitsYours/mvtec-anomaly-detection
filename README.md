@@ -80,54 +80,101 @@ Both image-level (AUROC, AP, F1) and pixel-level (Pixel-AUROC) metrics are evalu
 ---
 
 ## 3. System Architecture
-
 ```mermaid
 flowchart TD
-    A[MVTec AD Dataset\n3 categories: leather · tile · metal_nut] --> B[Dataset Validation\n& EDA]
+    %% ── INPUT ──────────────────────────────────────────────────
+    A([🗂️ MVTec AD Dataset\nleather · tile · metal_nut])
+
+    A --> B[Dataset Validation & EDA]
     B --> C[Preprocessing\nResize 256×256 · ImageNet Normalize]
-    C --> D[Validation Split\nLocked before experiments\nval_indices.json]
 
-    C --> E[Train Split\nNormal images only]
-    C --> F[Test Holdout\nNormal + Defective]
+    %% ── SPLIT ──────────────────────────────────────────────────
+    C --> D1[(🔒 Validation Split\nval_indices.json\nSEED=42 · Locked)]
+    C --> D2[/Train Split\nNormal images only/]
+    C --> D3[/Test Holdout\nNormal + Defective/]
 
-    E --> G[PatchCore Pipeline]
-    E --> H[Conv-AE Pipeline]
+    %% ── DUAL PIPELINE ──────────────────────────────────────────
+    D2 --> PC
+    D2 --> AE
 
-    subgraph G[PatchCore Pipeline]
-        G1[WideResNet-50\nImageNet pretrained · Frozen] --> G2[Feature Extraction\nlayer2 + layer3 · Multi-scale fusion]
-        G2 --> G3[Patch Feature Matrix\nN_patches × 1536 · numpy memmap]
-        G3 --> G4[Greedy Coreset\n10% retention · JL projection]
-        G4 --> G5[Memory Bank\nK × 1536 · saved .npy]
-        G5 --> G6[FAISS IndexFlatL2\nExact k-NN search]
+    subgraph PC [" 🔵  PatchCore Pipeline  (No Training) "]
+        direction TB
+        P1[WideResNet-50\nImageNet · Frozen]
+        P2[Feature Extraction\nlayer2 + layer3\nMulti-scale Fusion]
+        P3[(Patch Feature Matrix\nN_patches × 1536\nnumpy memmap)]
+        P4[Greedy Coreset\n10% · JL Projection]
+        P5[(Memory Bank\nK × 1536 · .npy)]
+        P6[FAISS IndexFlatL2\nExact k-NN · k=9]
+        P1 --> P2 --> P3 --> P4 --> P5 --> P6
     end
 
-    subgraph H[Conv-AE Pipeline]
-        H1[Conv-AE Architecture\n4-block Encoder · 4-block Decoder] --> H2[Training\nMSE + SSIM loss · 50 epochs · Adam]
-        H2 --> H3[Best Checkpoint\nsaved .pt · Drive]
+    subgraph AE [" 🔴  Conv-AE Pipeline  (50 Epochs) "]
+        direction TB
+        A1[Conv-AE\n4-block Encoder\n4-block Decoder]
+        A2[Training\nMSE + SSIM Loss\nAdam · CosineAnnealingLR]
+        A3[(Best Checkpoint\n.pt · Google Drive)]
+        A1 --> A2 --> A3
     end
 
-    F --> I[Anomaly Scoring]
-    G6 --> I
-    H3 --> I
+    %% ── SCORING ────────────────────────────────────────────────
+    D3  --> SC
+    P6  --> SC
+    A3  --> SC
 
-    I --> I1[PatchCore Score\nmax kNN distance across patches]
-    I --> I2[AE Score\nmean pixel reconstruction error]
+    subgraph SC [" ⚡  Anomaly Scoring "]
+        direction LR
+        S1[PatchCore Score\nmax kNN distance]
+        S2[AE Score\nmean pixel error]
+    end
 
-    I1 --> J[Score Normalization\nMin-Max on holdout]
-    I2 --> J
+    %% ── NORMALIZATION & THRESHOLD ──────────────────────────────
+    SC  --> N[Score Normalization\nMin-Max on Test Holdout]
+    D1  --> T[Threshold Selection\nF1 sweep · 1000 steps\non Validation Set]
+    N   --> T
 
-    D --> K[Threshold Selection\nF1 sweep on val set]
-    J --> K
+    %% ── EVALUATION ─────────────────────────────────────────────
+    N --> E
+    T --> E
 
-    J --> L[Metric Evaluation\non Test Holdout]
-    K --> L
+    subgraph E [" 📊  Metric Evaluation on Test Holdout "]
+        direction LR
+        E1[AUROC\nAvg Precision\nF1 · FPR]
+        E2[Pixel-AUROC\nLocalization Quality]
+        E3[Per-Defect\nF1 Breakdown]
+    end
 
-    L --> M[AUROC · AP · F1 · FPR\nPixel-AUROC]
-    M --> N[Visualization Suite]
-    M --> O[Error Analysis]
+    %% ── OUTPUT ─────────────────────────────────────────────────
+    E --> V
+    E --> ER
 
-    N --> N1[Heatmap Gallery\nROC · PR · Score Distribution\nPer-defect F1 · Comparison Heatmap]
-    O --> O1[FP/FN Analysis\nHard Cases · Score Behavior\nPattern Analysis]
+    subgraph V [" 🖼️  Visualization Suite "]
+        direction LR
+        V1[Heatmap Gallery\nROC · PR Curves]
+        V2[Score Distribution\nComparison Heatmap]
+        V3[Per-defect\nF1 Bar Charts]
+    end
+
+    subgraph ER [" 🔍  Error Analysis "]
+        direction LR
+        R1[FP / FN Gallery\nHard Cases]
+        R2[Score Behavior\nPattern Analysis]
+        R3[Limitations\n& Future Work]
+    end
+
+    %% ── STYLING ────────────────────────────────────────────────
+    style A    fill:#4A90D9,color:#fff,stroke:#2171b5
+    style D1   fill:#F5A623,color:#fff,stroke:#D4881A
+    style D2   fill:#7ED321,color:#fff,stroke:#5BAD0F
+    style D3   fill:#7ED321,color:#fff,stroke:#5BAD0F
+    style PC   fill:#EBF5FF,stroke:#4A90D9,stroke-width:2px
+    style AE   fill:#FFF0F0,stroke:#D62728,stroke-width:2px
+    style SC   fill:#F5F5FF,stroke:#7B68EE,stroke-width:2px
+    style E    fill:#F0FFF0,stroke:#2CA02C,stroke-width:2px
+    style V    fill:#FFFAF0,stroke:#FF7F0E,stroke-width:2px
+    style ER   fill:#FFF5F5,stroke:#D62728,stroke-width:2px
+    style P1   fill:#DBEEFF,stroke:#4A90D9
+    style P5   fill:#DBEEFF,stroke:#4A90D9
+    style A3   fill:#FFE4E4,stroke:#D62728
 ```
 
 ---
