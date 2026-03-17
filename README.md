@@ -1,5 +1,6 @@
-# Unsupervised Industrial Defect Detection on MVTec AD Benchmark
+<div align="center">
 
+# Unsupervised Industrial Defect Detection on MVTec AD Benchmark
 ### Comparative Analysis of Reconstruction-Based and Memory-Bank Approaches with Anomaly Localization
 
 > A complete end-to-end ML pipeline implementing and comparing **PatchCore** (memory-bank) and **Convolutional Autoencoder** (reconstruction-based) for unsupervised industrial anomaly detection on the MVTec AD benchmark — covering feature extraction, anomaly scoring, pixel-level localization, evaluation, and error analysis.
@@ -9,6 +10,7 @@
 [![Platform](https://img.shields.io/badge/Platform-Google%20Colab-F9AB00.svg)](https://colab.research.google.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/Fatahillah/industrial-anomaly-detection/blob/main/LICENSE)
 
+</div>
 
 ---
 
