@@ -18,33 +18,18 @@
 
 <div align="center">
 
-| 📌 **Overview** | |
+| | |
 |:---|:---|
-| 1. [Project Overview](#1-project-overview) | 2. [Key Features](#2-key-features) |
-| 3. [System Architecture](#3-system-architecture) | |
-
-| 📂 **Data & Structure** | |
-|:---|:---|
-| 4. [Dataset](#4-dataset) | 5. [Project Structure](#5-project-structure) |
-
-| ⚙️ **Technical Pipeline** | |
-|:---|:---|
-| 6. [End-to-End Pipeline](#6-end-to-end-pipeline) | 7. [Methodology](#7-methodology) |
-| 8. [Anomaly Localization](#8-anomaly-localization) | 9. [Evaluation Metrics](#9-evaluation-metrics) |
-
-| 📊 **Results & Analysis** | |
-|:---|:---|
-| 10. [Experiment Results](#10-experiment-results) | 11. [Visualization Results](#11-visualization-results) |
-| 12. [Error Analysis](#12-error-analysis) | 13. [Comparative Analysis](#13-comparative-analysis) |
-
-| 💡 **Discussion** | |
-|:---|:---|
-| 14. [Limitations](#14-limitations) | 15. [Future Work](#15-future-work) |
-
-| 🚀 **Usage** | |
-|:---|:---|
-| 16. [How to Run](#16-how-to-run) | 17. [Requirements](#17-requirements) |
-| 18. [Reproducibility](#18-reproducibility) | 19. [References](#19-references) |
+| 1. [Project Overview](#1-project-overview) | 11. [Visualization Results](#11-visualization-results) |
+| 2. [Key Features](#2-key-features) | 12. [Error Analysis](#12-error-analysis) |
+| 3. [System Architecture](#3-system-architecture) | 13. [Comparative Analysis](#13-comparative-analysis) |
+| 4. [Dataset](#4-dataset) | 14. [Limitations](#14-limitations) |
+| 5. [Project Structure](#5-project-structure) | 15. [Future Work](#15-future-work) |
+| 6. [End-to-End Pipeline](#6-end-to-end-pipeline) | 16. [How to Run](#16-how-to-run) |
+| 7. [Methodology](#7-methodology) | 17. [Requirements](#17-requirements) |
+| 8. [Anomaly Localization](#8-anomaly-localization) | 18. [Reproducibility](#18-reproducibility) |
+| 9. [Evaluation Metrics](#9-evaluation-metrics) | 19. [References](#19-references) |
+| 10. [Experiment Results](#10-experiment-results) | |
 
 </div>
 
