@@ -80,196 +80,54 @@ Both image-level (AUROC, AP, F1) and pixel-level (Pixel-AUROC) metrics are evalu
 ---
 
 ## 3. System Architecture
+
 ```mermaid
 flowchart TD
+    A[MVTec AD Dataset\n3 categories: leather · tile · metal_nut] --> B[Dataset Validation\n& EDA]
+    B --> C[Preprocessing\nResize 256×256 · ImageNet Normalize]
+    C --> D[Validation Split\nLocked before experiments\nval_indices.json]
 
-    %% ════════════════════════════════════════════════
-    %% PHASE 1 — DATA INGESTION
-    %% ════════════════════════════════════════════════
-    subgraph PH1["  📥  PHASE 1 · Data Ingestion  "]
-        direction LR
-        A["🗂️ MVTec AD Dataset
-        leather · tile · metal_nut"]
-        B["Dataset Validation & EDA"]
-        C["Preprocessing
-        Resize 256×256 · ImageNet Normalize"]
-        A --> B --> C
+    C --> E[Train Split\nNormal images only]
+    C --> F[Test Holdout\nNormal + Defective]
+
+    E --> G[PatchCore Pipeline]
+    E --> H[Conv-AE Pipeline]
+
+    subgraph G[PatchCore Pipeline]
+        G1[WideResNet-50\nImageNet pretrained · Frozen] --> G2[Feature Extraction\nlayer2 + layer3 · Multi-scale fusion]
+        G2 --> G3[Patch Feature Matrix\nN_patches × 1536 · numpy memmap]
+        G3 --> G4[Greedy Coreset\n10% retention · JL projection]
+        G4 --> G5[Memory Bank\nK × 1536 · saved .npy]
+        G5 --> G6[FAISS IndexFlatL2\nExact k-NN search]
     end
 
-    %% ════════════════════════════════════════════════
-    %% PHASE 2 — DATA SPLITTING
-    %% ════════════════════════════════════════════════
-    subgraph PH2["  ✂️  PHASE 2 · Data Splitting  "]
-        direction LR
-        D["🔒 Validation Split
-        val_indices.json · SEED=42 · Locked"]
-        E["🟢 Train Split
-        Normal images only"]
-        F["🔵 Test Holdout
-        Normal + Defective"]
+    subgraph H[Conv-AE Pipeline]
+        H1[Conv-AE Architecture\n4-block Encoder · 4-block Decoder] --> H2[Training\nMSE + SSIM loss · 50 epochs · Adam]
+        H2 --> H3[Best Checkpoint\nsaved .pt · Drive]
     end
 
-    C --> D
-    C --> E
-    C --> F
+    F --> I[Anomaly Scoring]
+    G6 --> I
+    H3 --> I
 
-    %% ════════════════════════════════════════════════
-    %% PHASE 3 — DUAL PIPELINE
-    %% ════════════════════════════════════════════════
-    subgraph PH3["  ⚙️  PHASE 3 · Dual Pipeline  "]
-        direction LR
+    I --> I1[PatchCore Score\nmax kNN distance across patches]
+    I --> I2[AE Score\nmean pixel reconstruction error]
 
-        subgraph PC["  🔵 PatchCore  ·  No Training Required  "]
-            direction TB
-            P1["WideResNet-50
-            ImageNet · Frozen · 68.9M params"]
-            P2["Feature Extraction
-            layer2 512ch + layer3 1024ch
-            Multi-scale Fusion → 1536 dim"]
-            P3["Patch Feature Matrix
-            N_patches × 1536
-            numpy memmap · local SSD"]
-            P4["Greedy Coreset
-            JL Projection 1536→128
-            10% retention"]
-            P5["Memory Bank
-            K × 1536 · saved .npy"]
-            P6["FAISS IndexFlatL2
-            Exact k-NN · k=9"]
-            P1 --> P2 --> P3 --> P4 --> P5 --> P6
-        end
+    I1 --> J[Score Normalization\nMin-Max on holdout]
+    I2 --> J
 
-        subgraph AE["  🔴 Conv-AE  ·  50 Epochs Training  "]
-            direction TB
-            A1["Conv-AE Architecture
-            4-block Encoder · stride-2 Conv
-            4-block Decoder · ConvTranspose"]
-            A2["Training
-            Loss: 0.8×MSE + 0.2×(1−SSIM)
-            Adam · CosineAnnealingLR · AMP"]
-            A3["Best Checkpoint
-            saved .pt · Google Drive
-            Resume-capable"]
-            A1 --> A2 --> A3
-        end
-    end
+    D --> K[Threshold Selection\nF1 sweep on val set]
+    J --> K
 
-    E --> P1
-    E --> A1
+    J --> L[Metric Evaluation\non Test Holdout]
+    K --> L
 
-    %% ════════════════════════════════════════════════
-    %% PHASE 4 — ANOMALY SCORING
-    %% ════════════════════════════════════════════════
-    subgraph PH4["  🎯  PHASE 4 · Anomaly Scoring  "]
-        direction LR
-        S1["PatchCore Score
-        max kNN distance
-        across all patches"]
-        S2["AE Score
-        mean pixel
-        reconstruction error"]
-        S3["Score Normalization
-        Min-Max fitted on
-        Test Holdout only"]
-        S1 --> S3
-        S2 --> S3
-    end
+    L --> M[AUROC · AP · F1 · FPR\nPixel-AUROC]
+    M --> N[Visualization Suite]
+    M --> O[Error Analysis]
 
-    F  --> S1
-    F  --> S2
-    P6 --> S1
-    A3 --> S2
-
-    %% ════════════════════════════════════════════════
-    %% PHASE 5 — EVALUATION
-    %% ════════════════════════════════════════════════
-    subgraph PH5["  📊  PHASE 5 · Evaluation  "]
-        direction LR
-        T["Threshold Selection
-        F1 sweep · 1000 steps
-        on Validation Set only"]
-        M1["Image-level Metrics
-        AUROC · Avg Precision
-        F1 · FPR"]
-        M2["Pixel-level Metrics
-        Pixel-AUROC
-        Localization Quality"]
-        M3["Per-Defect Analysis
-        F1 per defect type
-        14 defect types total"]
-        T --> M1
-        T --> M2
-        T --> M3
-    end
-
-    D   --> T
-    S3  --> T
-    S3  --> M1
-    S3  --> M2
-
-    %% ════════════════════════════════════════════════
-    %% PHASE 6 — OUTPUT
-    %% ════════════════════════════════════════════════
-    subgraph PH6["  🖼️  PHASE 6 · Output & Analysis  "]
-        direction LR
-
-        subgraph VIZ["  Visualization Suite  "]
-            direction TB
-            V1["ROC & PR Curves
-            6 experiments · 1 figure each"]
-            V2["Score Distribution
-            KDE · Normal vs Defective"]
-            V3["Heatmap Gallery
-            3-panel · GT Mask overlay"]
-            V4["Comparison Heatmap
-            4 metrics · 2×3 grid"]
-        end
-
-        subgraph ERR["  Error Analysis  "]
-            direction TB
-            R1["FP / FN Gallery
-            Top-N sorted by score"]
-            R2["Hard Cases
-            Both methods failed"]
-            R3["Score Behavior
-            Easy · Ambiguous · Hard"]
-            R4["Pattern Analysis
-            Limitations · Future Work"]
-        end
-    end
-
-    M1 --> V1
-    M1 --> V2
-    M2 --> V3
-    M3 --> V4
-    M1 --> R1
-    M1 --> R2
-    M2 --> R3
-    M3 --> R4
-
-    %% ════════════════════════════════════════════════
-    %% STYLING
-    %% ════════════════════════════════════════════════
-    style PH1  fill:#F0F7FF,stroke:#4A90D9,stroke-width:2px,color:#1a1a2e
-    style PH2  fill:#F0FFF4,stroke:#2CA02C,stroke-width:2px,color:#1a1a2e
-    style PH3  fill:#FAFAFA,stroke:#7B68EE,stroke-width:2px,color:#1a1a2e
-    style PH4  fill:#FFF8F0,stroke:#FF7F0E,stroke-width:2px,color:#1a1a2e
-    style PH5  fill:#F0FFF0,stroke:#2CA02C,stroke-width:2px,color:#1a1a2e
-    style PH6  fill:#FFF5F5,stroke:#D62728,stroke-width:2px,color:#1a1a2e
-
-    style PC   fill:#EBF5FF,stroke:#4A90D9,stroke-width:1.5px
-    style AE   fill:#FFF0F0,stroke:#D62728,stroke-width:1.5px
-    style VIZ  fill:#FFFBF0,stroke:#FF7F0E,stroke-width:1.5px
-    style ERR  fill:#FFF0F5,stroke:#D62728,stroke-width:1.5px
-
-    style A    fill:#4A90D9,color:#fff,stroke:#2171b5
-    style D    fill:#F5A623,color:#fff,stroke:#D4881A
-    style E    fill:#2CA02C,color:#fff,stroke:#1A7A1A
-    style F    fill:#1f77b4,color:#fff,stroke:#084c8d
-    style P5   fill:#DBEEFF,stroke:#4A90D9,stroke-width:1.5px
-    style A3   fill:#FFE4E4,stroke:#D62728,stroke-width:1.5px
-    style S3   fill:#FFF0CC,stroke:#FF7F0E,stroke-width:1.5px
-    style T    fill:#FFE4B5,stroke:#F5A623,stroke-width:1.5px
+    N --> N1[Heatmap Gallery\nROC · PR · Score Distribution\nPer-defect F1 · Comparison Heatmap]
+    O --> O1[FP/FN Analysis\nHard Cases · Score Behavior\nPattern Analysis]
 ```
 
 ---
