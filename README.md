@@ -701,7 +701,7 @@ Key finding from score behavior: PatchCore tile has 20 defective samples in the 
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/industrial-anomaly-detection.git
+git clone https://github.com/f4tahitsYours/mvtec-anomaly-detection.git
 cd industrial-anomaly-detection
 ```
 
@@ -870,6 +870,3 @@ Dataset: [MVTec AD](https://www.mvtec.com/company/research/datasets/mvtec-ad) â€
 Compute: [Google Colab](https://colab.research.google.com) free tier (T4 GPU, 15.64 GB VRAM, 13.6 GB RAM).
 
 ---
-
-*Project 3 of 5 | Computer Vision | Anomaly Detection*
-*Platform: Google Colab Free Tier (T4 GPU) + Google Drive*
